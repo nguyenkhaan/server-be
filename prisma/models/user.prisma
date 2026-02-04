@@ -1,0 +1,17 @@
+model User {
+    id        Int        @id @default(autoincrement())
+    name      String     @default("")
+    email     String     @unique @default("abc@gmail.com")
+    password  String
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+    active    Boolean    @default(false)
+    userRoles UserRole[]
+}
+
+model UserRole {
+    id     Int  @id @default(autoincrement())
+    user   User @relation(fields: [userID], references: [id])
+    userID Int
+    role   Role @default(USER)
+}
