@@ -1,3 +1,5 @@
 {
-    "trae.chatLanguage": "en"
+    "trae.chatLanguage": "en",
+    "trae.tab.enableRename": false,
+    "trae.tab.enableAutoImport": false
 }
