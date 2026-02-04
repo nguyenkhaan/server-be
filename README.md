@@ -1,98 +1,114 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# BE-SERVER 
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A modern backend service built with a scalable architecture and industry-standard tooling.  
+Designed for maintainability, performance, and long-term growth.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🛠 Tech Stack
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+![Node.js](https://img.shields.io/badge/Node.js-ESNext-339933?logo=node.js&logoColor=white)
+![Bun](https://img.shields.io/badge/Bun-Runtime-000000?logo=bun&logoColor=white)
+![NestJS](https://img.shields.io/badge/NestJS-Framework-E0234E?logo=nestjs&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?logo=typescript&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker&logoColor=white)
 
-## Project setup
+---
 
-```bash
-$ npm install
-```
+## 🚀 Getting Started
 
-## Compile and run the project
+### Prerequisites
+Ensure the following tools are installed on your system:
+
+- **Bun** (recommended runtime)
+- **Node.js** (LTS or newer)
+- **Docker** & **Docker Compose**
+- **PostgreSQL** (if running without Docker)
+
+---
+
+### Installation
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+bun install
 ```
 
-## Run tests
+### Environment Setup
+- Copy the .env file (see the template in .env.example) 
 
+### Run Docker 
+```bash 
+docker compose up -d 
+```
+
+### Install prisma 
 ```bash
-# unit tests
-$ npm run test
+bun prisma db push 
+bun prisma generate 
+``` 
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+## START THE APPLICATION 
+- Dev Mode: 
+```bash 
+bun dev 
+``` 
+- Production Mode: 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+bun build 
+bun start  
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Folder Structure 
+```
+/
+├── .husky/              # Git hooks for pre-commit checks
+├── dist/                # Compiled TypeScript output
+├── prisma/              # Prisma schema, migrations, and seeds
+│   ├── migrations/      # Database migration files
+│   └── schema.prisma    # Main Prisma schema file
+├── src/                 # Main application source code
+│   ├── app/             # Core application modules
+│   │   ├── auth/        # Authentication-related logic
+│   │   ├── user/        # User management logic
+│   │   └── ...          # Other business domain modules
+│   ├── common/          # Shared utilities, constants, and decorators
+│   │   ├── constants/   # Application-wide constants
+│   │   ├── decorators/  # Custom decorators
+│   │   └── utils/       # Utility functions
+│   ├── configs/         # Configuration files (e.g., database, auth)
+│   ├── database/        # Database connection and seeding logic
+│   ├── generated/       # Auto-generated code (e.g., Prisma Client)
+│   ├── shared/          # Shared modules and services
+│   └── main.ts          # Application entry point
+├── .env                 # Environment variables (local)
+├── .env.example         # Example environment variables
+├── .gitignore           # Files and folders to ignore in Git
+├── docker-compose.yml   # Docker Compose configuration
+├── Dockerfile           # Dockerfile for building the application image
+├── nest-cli.json        # NestJS CLI configuration
+└── package.json         # Project dependencies and scripts
+```
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Database Diagram
+```mermaid
+erDiagram
+    User {
+        Int id PK
+        String name
+        String email
+        String password
+        DateTime createdAt
+        DateTime updatedAt
+        Boolean active
+    }
+ 
+    UserRole {
+        Int id PK
+        Int userID FK
+        Role role
+    }
+ 
+    User ||--o{ UserRole : "has"
+```
