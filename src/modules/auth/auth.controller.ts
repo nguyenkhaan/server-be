@@ -1,11 +1,12 @@
 import type { LoginDTO } from "@/modules/auth/dto/auth.dto";
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
-import { AuthGuard } from "@nestjs/passport";
-
+import { LocalAuthGuard } from "@/modules/auth/local-auth.guard";
+import { JwtAuthGuard } from "@/modules/auth/jwt-auth.guard";
 @Controller('auth') 
 export class AuthController 
 {
-    @UseGuards(AuthGuard('local'))
+    @UseGuards(LocalAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Post('login')
     async login(@Body() loginData : LoginDTO) 
     {
