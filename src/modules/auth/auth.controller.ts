@@ -1,5 +1,5 @@
 import { LoginDTO, RegisterDTO } from "@/modules/auth/dto/auth.dto";
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { LocalAuthGuard } from "@/modules/auth/local-auth.guard";
 import { JwtAuthGuard } from "@/modules/auth/jwt-auth.guard";
 import { AuthService } from "@/modules/auth/auth.service";
@@ -14,7 +14,14 @@ export class AuthController
     {
         const response = await this.authService.register(data) 
         return response
-
+    }
+    @Get('verify') 
+    async verify(@Query('token') token : string) 
+    {
+        if (!token || token == null) 
+            throw new BadRequestException("Token is missing") 
+        const response = this.authService.verifyUser(token) 
+        return response
     }
     @UseGuards(LocalAuthGuard)
     @UseGuards(JwtAuthGuard)
