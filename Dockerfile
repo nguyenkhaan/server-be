@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install 
 
 # Copy prisma schema and generate client
 COPY prisma ./prisma
@@ -26,7 +26,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 
 # Install production dependencies
-RUN bun install --frozen-lockfile
+RUN bun install  
 
 # Copy the build output from the builder stage
 COPY --from=builder /app/dist ./dist
