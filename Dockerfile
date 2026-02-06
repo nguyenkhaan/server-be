@@ -1,39 +1,30 @@
-# 1. Build stage
-FROM oven/bun:1.1.0 as builder
+# ======================
+# 1. Builder
+# ======================
+FROM oven/bun:1.1.0 AS builder
 WORKDIR /app
 
-# Copy package.json and bun.lock
 COPY package.json bun.lock ./
+RUN bun install
 
-# Install dependencies
-RUN bun install 
-
-# Copy prisma schema and generate client
 COPY prisma ./prisma
 RUN bunx prisma generate
 
-# Copy the rest of the application code
 COPY . .
-
-# Build the application
 RUN bun run build
 
-# 2. Production stage
-FROM oven/bun:1.1.0-slim as production
+
+# ======================
+# 2. Production
+# ======================
+FROM oven/bun:1.1.0-slim AS production
 WORKDIR /app
 
-# Copy package.json and bun.lockb
-COPY package.json bun.lock ./
 
-# Install production dependencies
-RUN bun install  
-
-# Copy the build output from the builder stage
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/prisma ./prisma
 
-# Expose the application port
 EXPOSE 4000
-
-# Start the application
 CMD ["bun", "dist/main.js"]
