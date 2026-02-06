@@ -1,0 +1,8 @@
+name: be-server
+on:
+  push:
+    branches: [ ci/cd ]
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
