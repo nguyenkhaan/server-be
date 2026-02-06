@@ -1,0 +1,13 @@
+model Artist {
+    id             Int           @id @default(autoincrement())
+    user_id        Int?          @unique
+    active         Boolean
+    name           String
+    profile_avatar String?
+    album          Album[]
+    artistGenre    ArtistGenre[]
+    trackArtist    TrackArtist[]
+    follower       Followers[]
+
+    @@index([name])
+}

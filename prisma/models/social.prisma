@@ -1,0 +1,17 @@
+model Followers {
+    user     User   @relation(fields: [userID], references: [id])
+    userID   Int
+    artist   Artist @relation(fields: [artistID], references: [id])
+    artistID Int
+
+    @@id([userID, artistID])
+}
+
+model Likes {
+    user    User  @relation(fields: [userID], references: [id])
+    userID  Int
+    track   Track @relation(fields: [trackID], references: [id])
+    trackID Int
+
+    @@id([userID, trackID])
+}

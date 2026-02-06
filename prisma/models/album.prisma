@@ -1,0 +1,13 @@
+model Album {
+    id           Int          @id @default(autoincrement())
+    artist       Artist       @relation(fields: [artistID], references: [id])
+    artistID     Int
+    name         String
+    release_date DateTime
+    thumbnail    String
+    albumGenre   AlbumGenre[]
+    track        Track[]
+
+    @@index([release_date])
+    @@index([artistID, name])
+}

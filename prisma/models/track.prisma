@@ -1,0 +1,31 @@
+model Track {
+    id                 Int                @id @default(autoincrement())
+    album              Album              @relation(fields: [albumID], references: [id])
+    albumID            Int
+    title              String
+    duration           Int
+    file_path          String
+    track_number       Int?
+    trackArtists       TrackArtist[]
+    playlistTracks     PlaylistTrack[]
+    likes              Likes[]
+    listeningHistories listeningHistory[]
+}
+
+model TrackArtist {
+    track    Track  @relation(fields: [trackID], references: [id])
+    trackID  Int
+    artist   Artist @relation(fields: [artistID], references: [id])
+    artistID Int
+
+    @@id([trackID, artistID])
+}
+
+model PlaylistTrack {
+    playlist   Playlist @relation(fields: [playlistID], references: [id])
+    playlistID Int
+    track      Track    @relation(fields: [trackID], references: [id])
+    trackID    Int
+
+    @@id([trackID, playlistID])
+}

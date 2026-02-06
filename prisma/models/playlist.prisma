@@ -1,0 +1,10 @@
+model Playlist {
+    id             Int             @id @default(autoincrement())
+    name           String
+    img            String?
+    user           User            @relation(fields: [userID], references: [id])
+    userID         Int
+    PlaylistTracks PlaylistTrack[]
+
+    @@index([name])
+}

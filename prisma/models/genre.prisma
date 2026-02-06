@@ -1,0 +1,24 @@
+model Genre {
+    id          Int           @id @default(autoincrement())
+    name        String
+    artistGenre ArtistGenre[]
+    albumGenre  AlbumGenre[]
+}
+
+model ArtistGenre {
+    aritst   Artist @relation(fields: [artistID], references: [id])
+    artistID Int
+    genre    Genre  @relation(fields: [genreID], references: [id])
+    genreID  Int
+
+    @@id([artistID, genreID])
+}
+
+model AlbumGenre {
+    genre   Genre @relation(fields: [genreID], references: [id])
+    genreID Int
+    album   Album @relation(fields: [albumID], references: [id])
+    albumID Int
+
+    @@id([genreID, albumID])
+}

@@ -1,0 +1,30 @@
+model EmailVerificationToken {
+    id        Int       @id @default(autoincrement())
+    token     String    @unique
+    createdAt DateTime  @default(now())
+    usedAt    DateTime?
+    expiresAt DateTime
+    email     String
+}
+
+model PasswordVerificationToken {
+    id        Int       @id @default(autoincrement())
+    token     String    @unique
+    createdAt DateTime  @default(now())
+    usedAt    DateTime?
+    expiresAt DateTime
+    email     String
+}
+
+model AuthToken {
+    id        Int           @id @default(autoincrement())
+    token     String        @unique
+    user_id   Int
+    isActive  Boolean
+    createdAt DateTime      @default(now())
+    expiresAt DateTime
+    type      AUTHTOKENTYPE
+
+    @@index([user_id, type])
+    @@index([expiresAt])
+}
