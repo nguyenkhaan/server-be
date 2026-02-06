@@ -1,4 +1,4 @@
-import type { LoginDTO, RegisterDTO } from "@/modules/auth/dto/auth.dto";
+import { LoginDTO, RegisterDTO } from "@/modules/auth/dto/auth.dto";
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { LocalAuthGuard } from "@/modules/auth/local-auth.guard";
 import { JwtAuthGuard } from "@/modules/auth/jwt-auth.guard";

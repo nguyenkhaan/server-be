@@ -13,20 +13,24 @@ export class AuthService
     {
         try 
         {
-            const user = await this.prismaService.user.findFirst({
+            const user = await this.prismaService.user.findUnique({
                 where : {
                     email : data.email
                 }
             })
             if (user) 
                 throw new ConflictException("User has been exists") 
-            const hashedPassword = await Bun.password.hash(data.password)
+            const hashedPassword = await Bun.password.hash(data.password , {
+                algorithm : 'bcrypt', 
+                cost: 10 
+            })
             const newUser = await this.prismaService.user.create({
                 data : {
-                    date_of_birth : data.date_of_birth, 
+                    date_of_birth : new Date(data.date_of_birth), 
                     name : data.name, 
                     email : data.email, 
-                    password : hashedPassword
+                    password : hashedPassword, 
+                    active: false 
                 }
             })
             return newUser 
@@ -36,7 +40,6 @@ export class AuthService
             console.log('Register Error: ' , err) 
             throw new InternalServerErrorException("Internal Server Error") 
         }
-
     }
     async validateUser(email : string , password : string) 
     {

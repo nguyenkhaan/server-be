@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { LoggingInterceptor } from 'src/bases/interceptors/logging.interceptor';
 import { TransformInterceptor } from 'src/bases/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from '@/bases/filters/http-exception.filter';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -12,6 +13,10 @@ async function bootstrap() {
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalInterceptors(new TransformInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter())
+  app.useGlobalPipes(new ValidationPipe({
+    transform : true, 
+    whitelist : true 
+  }))
   await app.listen(port);
 
   // --- Modern Modern Panel Layout ---

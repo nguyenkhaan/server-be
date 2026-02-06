@@ -1,10 +1,11 @@
+import { Type } from "class-transformer";
 import { IsString , IsEmail , IsNotEmpty , IsOptional, IsDateString } from "class-validator";
 export class RegisterDTO {
     @IsString() 
     @IsNotEmpty() 
     name : string 
-    @IsString() 
     @IsNotEmpty() 
+    @Type(() => String)
     password : string 
     @IsEmail() 
     email : string 

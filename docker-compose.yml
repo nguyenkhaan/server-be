@@ -55,3 +55,6 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
+volumes:
+  postgres_data:
+  minio_data:
