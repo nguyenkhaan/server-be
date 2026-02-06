@@ -39,11 +39,14 @@ bun install
 - Copy the .env file (see the template in .env.example) 
 
 ### Run Docker 
-```bash 
-docker compose up -d 
-```
+
+- Install the docker extension in VSCODE. 
+- After it, right-mouse button click to the docker-compose.yml file in the project. 
+- You will see Compose up - Select Devices. Click to it and chooose postgres sql and minio-app. Turn off the api services. Click **Go** to build these containers. 
 
 ### Install prisma 
+- **Cautions**: Please confirm that you already have **.env** files in the root of your project. 
+- Run these commands step by step: 
 ```bash
 bun prisma db push 
 bun prisma generate 
@@ -54,7 +57,7 @@ bun prisma generate
 ```bash 
 bun dev 
 ``` 
-- Production Mode: 
+- Production Mode: (Do not touched)
 ```bash
 bun build 
 bun start  
@@ -96,19 +99,145 @@ bun start
 erDiagram
     User {
         Int id PK
+        Boolean active
         String name
         String email
         String password
-        DateTime createdAt
+        String profile_avatr
+        DateTime date_of_birth
         DateTime updatedAt
-        Boolean active
+        DateTime createdAt
     }
- 
+
     UserRole {
         Int id PK
         Int userID FK
         Role role
     }
- 
+
+    Artist {
+        Int id PK
+        Int user_id "nullable"
+        Boolean active
+        String name
+        String profile_avatar "nullable"
+    }
+
+    Album {
+        Int id PK
+        Int artistID FK
+        String name
+        DateTime release_date
+        String thumbnail
+    }
+
+    Track {
+        Int id PK
+        Int albumID FK
+        String title
+        Int duration
+        String file_path
+        Int track_number "nullable"
+    }
+
+    Genre {
+        Int id PK
+        String name
+    }
+
+    Playlist {
+        Int id PK
+        String name
+        String img "nullable"
+        Int userID FK
+    }
+
+    EmailVerificationToken {
+        Int id PK
+        String token
+        DateTime createdAt
+        DateTime usedAt "nullable"
+        DateTime expiresAt
+        String email
+    }
+
+    PasswordVerificationToken {
+        Int id PK
+        String token
+        DateTime createdAt
+        DateTime usedAt "nullable"
+        DateTime expiresAt
+        String email
+    }
+
+    AuthToken {
+        Int id PK
+        String token
+        Int user_id FK
+        Boolean isActive
+        DateTime createdAt
+        DateTime expiresAt
+        AUTHTOKENTYPE type
+    }
+
+    Followers {
+        Int userID PK, FK
+        Int artistID PK, FK
+    }
+
+    Likes {
+        Int userID PK, FK
+        Int trackID PK, FK
+    }
+
+    listeningHistory {
+        Int userID PK, FK
+        Int trackID PK, FK
+        DateTime played_at
+    }
+
+    ArtistGenre {
+        Int artistID PK, FK
+        Int genreID PK, FK
+    }
+
+    AlbumGenre {
+        Int genreID PK, FK
+        Int albumID PK, FK
+    }
+
+    TrackArtist {
+        Int trackID PK, FK
+        Int artistID PK, FK
+    }
+
+    PlaylistTrack {
+        Int playlistID PK, FK
+        Int trackID PK, FK
+    }
+
     User ||--o{ UserRole : "has"
+    User ||--o{ Playlist : "creates"
+    User ||--o{ AuthToken : "has"
+    User }o--o{ Followers : "follows"
+    User }o--o{ Likes : "likes"
+    User }o--o{ listeningHistory : "listens to"
+
+    Artist ||--o{ Album : "produces"
+    Artist }o--o{ Followers : "is followed by"
+    Artist }o--o{ ArtistGenre : "has genre"
+    Artist }o--o{ TrackArtist : "performs on"
+
+    Album ||--o{ Track : "contains"
+    Album }o--o{ AlbumGenre : "has genre"
+
+    Track }o--o{ Likes : "is liked by"
+    Track }o--o{ listeningHistory : "is listened to by"
+    Track }o--o{ TrackArtist : "features"
+    Track }o--o{ PlaylistTrack : "is in"
+
+    Genre }o--o{ ArtistGenre : "categorizes"
+    Genre }o--o{ AlbumGenre : "categorizes"
+
+    Playlist }o--o{ PlaylistTrack : "contains"
 ```
