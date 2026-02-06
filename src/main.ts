@@ -2,15 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { LoggingInterceptor } from 'src/bases/interceptors/logging.interceptor';
 import { TransformInterceptor } from 'src/bases/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from '@/bases/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const port = process.env.PORT ?? 4000;
+  const port = 4000 
 
   app.setGlobalPrefix('api');
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalInterceptors(new TransformInterceptor());
-
+  app.useGlobalFilters(new HttpExceptionFilter())
   await app.listen(port);
 
   // --- Modern Modern Panel Layout ---
