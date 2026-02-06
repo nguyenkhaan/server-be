@@ -1,42 +1,48 @@
-# Stage 1: Builder
-FROM node:24-alpine AS builder
+# ======================
+# 1. Build stage
+# ======================
+FROM node:20.19-alpine AS builder
 
 WORKDIR /app
 
-# Copy necessary files for dependency installation and Prisma generation
-COPY package*.json ./
-COPY prisma ./prisma/
+# Copy package files
+COPY package.json package-lock.json ./
 
-# Install dependencies (including devDependencies needed for 'prisma generate' and 'nest build')
-RUN npm install
+# Install deps (include dev deps for build)
+RUN npm ci
 
-# Generate the Prisma client
+# Copy prisma schema & generate client
+COPY prisma ./prisma
 RUN npx prisma generate
 
-# Copy the rest of the application source code
+# Copy source code
 COPY . .
 
-# Build the NestJS application
+# Build NestJS
 RUN npm run build
 
-# Stage 2: Production
-FROM node:24-alpine AS production
+
+# ======================
+# 2. Production stage
+# ======================
+FROM node:20.19-alpine AS production
 
 WORKDIR /app
 
-# Copy production-only dependencies and the built application from the builder stage
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install prod deps only
+RUN npm ci --omit=dev
+
+# Copy Prisma client
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy build output
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma/
 
-# Ensure the generated Prisma client files are present in the final image
-# Depending on your prisma schema and project structure, you might need to copy specific generated files.
-# The 'npm run build' step in the builder stage usually handles this if configured correctly (e.g., via nest-cli.json assets).
-# The above COPY of the prisma directory generally includes the necessary engine files.
-
-# Expose the port the NestJS app runs on (default is 3000)
+# Expose port
 EXPOSE 4000
 
-# Command to run the application in production mode
-CMD [ "npm", "run", "start:prod" ]
+# Start app
+CMD ["node", "dist/main.js"]
