@@ -18,7 +18,7 @@ model User {
 }
 
 model UserRole {
-    id     Int  @id
+    id     Int  @id @default(autoincrement())
     user   User @relation(fields: [userID], references: [id])
     userID Int
     role   Role
