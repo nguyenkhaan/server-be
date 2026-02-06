@@ -1,8 +1,8 @@
 # 1. Build stage
-FROM oven/bun:1.0 as builder
+FROM oven/bun:1.1.0 as builder
 WORKDIR /app
 
-# Copy package.json and bun.lockb
+# Copy package.json and bun.lock
 COPY package.json bun.lock ./
 
 # Install dependencies
@@ -19,7 +19,7 @@ COPY . .
 RUN bun run build
 
 # 2. Production stage
-FROM oven/bun:1.0-slim as production
+FROM oven/bun:1.1.0-slim as production
 WORKDIR /app
 
 # Copy package.json and bun.lockb
