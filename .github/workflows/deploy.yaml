@@ -29,9 +29,9 @@ jobs:
         with:
           context: ./ 
           file: ./Dockerfile 
-          builder: ${{ steps.buildx.outputs.name }}c
+          # builder: ${{ steps.buildx.outputs.name }} 
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/be-server
+          tags: be-server:latest 
       - name: Verify 
         run: echo ${{ steps.docker_build.outputs.digest }}
 
