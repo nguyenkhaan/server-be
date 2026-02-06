@@ -1,51 +1,62 @@
-# use the official Bun image
-# see all versions at https://hub.docker.com/r/oven/bun/tags
-FROM oven/bun:1 AS base
-WORKDIR /usr/src/app
+# syntax=docker/dockerfile:1.7
 
-# install dependencies into temp directory
-# this will cache them and speed up future builds
-FROM base AS install
-RUN mkdir -p /temp/dev
-COPY package.json bun.lock /temp/dev/
-RUN cd /temp/dev && bun install --frozen-lockfile
+FROM oven/bun:1.3.6-alpine AS base
 
-# install with --production (exclude devDependencies)
-RUN mkdir -p /temp/prod
-COPY package.json bun.lock /temp/prod/
-RUN cd /temp/prod && bun install --frozen-lockfile --production
+# Install only essential runtime dependencies
+# openssl3: needed for Node.js crypto modules
+# postgresql-client: only needed for Prisma migrations (can be removed if migrations run separately)
+RUN apk add --no-cache openssl3 postgresql-client && \
+    rm -rf /var/cache/apk/*
 
-# copy node_modules from temp directory
-# then copy all (non-ignored) project files into the image
-FROM base AS prerelease
-COPY --from=install /temp/dev/node_modules node_modules
+WORKDIR /app
+
+# Dependencies stage - uses BuildKit cache for faster rebuilds
+FROM base AS deps
+COPY package.json bun.lock ./
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --ignore-scripts
+
+# Build stage - install all dependencies including dev
+FROM base AS build
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Copy prisma schema and generate client
-COPY prisma ./prisma
-RUN bunx prisma generate
+# Generate Prisma Client before build
+ENV DATABASE_URL="file:./dev.db"
+RUN bun run prisma:generate
 
-# Create a symbolic link to resolve inconsistent import paths in the source code.
-# This makes the generated Prisma client available at the standard node_modules path,
-# allowing the TypeScript compiler to find the types during the build process.
-RUN rm -rf /usr/src/app/node_modules/@prisma/client && \
-    ln -s /usr/src/app/generated/prisma /usr/src/app/node_modules/@prisma/client
+# Build the application
+RUN bun run build && \
+    # Remove unnecessary files after build
+    rm -rf node_modules src test scripts *.md .editorconfig .eslintrc.cjs .prettierrc
 
-# build
-ENV NODE_ENV=production
-RUN bun run build
+# Production dependencies stage - only runtime dependencies
+FROM base AS production-deps
+COPY package.json bun.lock ./
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --production --ignore-scripts
 
-# copy production dependencies and source code into final image
+# Final production image
 FROM base AS release
-COPY --from=install /temp/prod/node_modules node_modules
-# Copy generated prisma client from prerelease stage
-COPY --from=prerelease /usr/src/app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=prerelease /usr/src/app/generated ./generated
-COPY --from=prerelease /usr/src/app/node_modules/@prisma/client ./node_modules/@prisma/client
-COPY --from=prerelease /usr/src/app/src . 
-COPY --from=prerelease /usr/src/app/package.json .
+# Set NODE_ENV to production early
+ENV NODE_ENV=production
 
-# run the app
+# Copy production dependencies
+COPY --from=production-deps /app/node_modules ./node_modules
+COPY --from=production-deps /app/package.json ./package.json
+
+# Copy built artifacts
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/generated ./generated
+COPY --from=build /app/prisma ./prisma
+
+RUN chown -R bun:bun /app
 USER bun
-EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", "run", "index.ts" ]
+
+ENV PORT=4000
+EXPOSE 4000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD bun --version || exit 1
+
+CMD ["bun", "dist/main.js"]
