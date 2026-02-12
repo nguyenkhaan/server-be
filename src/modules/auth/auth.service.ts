@@ -4,6 +4,8 @@ import { UserService } from "@/modules/user/user.service";
 import { RegisterDTO } from "@/modules/auth/dto/auth.dto";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
+import { LoginField } from "@/bases/common/enums/login.enum";
+import { AUTHTOKENTYPE, Role } from "@prisma/client";
 @Injectable() 
 export class AuthService 
 {
@@ -126,15 +128,67 @@ export class AuthService
 
     async validateUser(email : string , password : string) 
     {
+        console.log(email , password) 
         const user = await this.userService.findOne(email) 
+        console.log(user) 
         if (user) 
         {
             const results = await Bun.password.verify(
                 password, 
                 user.password 
             )
-            return results
+            if (results) return user 
+            return null  
         }
-        return null 
+        return null  
+    }
+    async login(user : any) 
+    {
+        try 
+        {
+            if (!user.active) 
+                throw new UnauthorizedException("User is not verified") 
+            const accessKey = this.configService.get<string>('ACCESS_SECRET') 
+            const refreshKey = this.configService.get<string>('REFRESH_SECRET') 
+            const userRoles = await this.prismaService.userRole.findMany({
+                where: {
+                    userID : user.id 
+                } , 
+                select : {
+                    role : true 
+                }
+            })
+            const payload = {
+                [LoginField.EMAIL] : user.email, 
+                [LoginField.NAME] : user.name, 
+                [LoginField.ROLE] : userRoles.map((userRoleRow) => userRoleRow.role) 
+            }
+            const access_token = this.jwtService.sign(
+            { 
+                ...payload , [LoginField.PURPOSE] : AUTHTOKENTYPE.ACCESS
+            } , {
+                secret: accessKey, 
+                expiresIn : '15m', 
+            })
+            //Create refresh token 
+            const refresh_token = this.jwtService.sign(
+            {
+                ...payload , [LoginField.PURPOSE] : AUTHTOKENTYPE.REFRESH     
+            } , {
+                secret: refreshKey, 
+                expiresIn : '30d', 
+            })
+            return {
+                accessToken : access_token, 
+                refreshToken : refresh_token
+            }
+        } 
+        catch (err) 
+        {
+            if (err instanceof UnauthorizedException) 
+                throw err 
+            throw new InternalServerErrorException("Login server down. Please try again") 
+            
+        }
     }
 }

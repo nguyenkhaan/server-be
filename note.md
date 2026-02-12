@@ -15,3 +15,12 @@ export default defineConfig({
 
 ```
 - Khong bien dich code ra js de chay => File package.json thay nest dev tro thanh bun src/main.ts vi bun ho tro chay code ma khong can bien dich 
+
+
+Thuc te ve guard, chung ta chi can gi 
+jwt-strategy: Dinh nghia strategy de verify access-token 
+jwt-auth-guard: Tao guard de verify token gui ve 
+
+local-strategy: Dung de tao ra guard email va password khi nguoi dung dang nhap 
+local-auth.guard: Tao ra guard de verify khi nguoi dung dang nhap 
+

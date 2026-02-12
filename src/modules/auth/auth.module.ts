@@ -7,6 +7,8 @@ import { AuthController } from '@/modules/auth/auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from '@/bases/common/constants/app.constant';
 import { JwtStrategy } from '@/modules/auth/jwt.strategy';
+import { LocalAuthGuard } from '@/modules/auth/local-auth.guard';
+import { JwtAuthGuard } from '@/modules/auth/jwt-auth.guard';
 @Module({
   imports: [
       UserModule , PassportModule, 
@@ -15,7 +17,7 @@ import { JwtStrategy } from '@/modules/auth/jwt.strategy';
         signOptions: { expiresIn : '60s' }
       })
   ],
-  providers: [AuthService , LocalStrategy , JwtStrategy],
+  providers: [AuthService , LocalStrategy , JwtStrategy , LocalAuthGuard , JwtAuthGuard],
   controllers: [AuthController]
 })
 export class AuthModule {}

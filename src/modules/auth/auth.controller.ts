@@ -1,8 +1,9 @@
 import { LoginDTO, RegisterDTO } from "@/modules/auth/dto/auth.dto";
-import { BadRequestException, Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { LocalAuthGuard } from "@/modules/auth/local-auth.guard";
 import { JwtAuthGuard } from "@/modules/auth/jwt-auth.guard";
 import { AuthService } from "@/modules/auth/auth.service";
+import type { Request } from "express";
 @Controller('auth') 
 export class AuthController 
 {
@@ -23,14 +24,13 @@ export class AuthController
         const response = this.authService.verifyUser(token) 
         return response
     }
-    @UseGuards(LocalAuthGuard)
-    @UseGuards(JwtAuthGuard)
     @Post('login')
-    async login(@Body() loginData : LoginDTO) 
-    {
-        const email = loginData.email 
-        const password = loginData.password
-        console.log(email + "  " + password) 
-        return 'Login successfully'
+    @UseGuards(LocalAuthGuard)
+    async login(@Body() loginData : LoginDTO , @Req() req : Request) 
+    {   
+        console.log(req.user) 
+        // const {email , password} = loginData 
+        const responseData = await this.authService.login(req.user) 
+        return responseData
     }
 }
