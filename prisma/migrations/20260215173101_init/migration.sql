@@ -2,7 +2,7 @@
 CREATE TYPE "Role" AS ENUM ('ADMIN', 'MANAGER', 'USER', 'ARTIST');
 
 -- CreateEnum
-CREATE TYPE "FUNCTOKETYPE" AS ENUM ('VERIFY_EMAIL', 'RESET_PASSWORD');
+CREATE TYPE "OTPTYPE" AS ENUM ('RESET_PASSWORD', 'EMAIL_VERIFY');
 
 -- CreateEnum
 CREATE TYPE "AUTHTOKENTYPE" AS ENUM ('ACCESS', 'REFRESH');
@@ -30,27 +30,27 @@ CREATE TABLE "Artist" (
 );
 
 -- CreateTable
-CREATE TABLE "EmailVerificationToken" (
+CREATE TABLE "resetPasswordOTP" (
     "id" SERIAL NOT NULL,
-    "token" TEXT NOT NULL,
+    "otp" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "usedAt" TIMESTAMP(3),
     "expiresAt" TIMESTAMP(3) NOT NULL,
-    "email" TEXT NOT NULL,
+    "userID" INTEGER NOT NULL,
 
-    CONSTRAINT "EmailVerificationToken_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "resetPasswordOTP_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "PasswordVerificationToken" (
+CREATE TABLE "registerVerificationOTP" (
     "id" SERIAL NOT NULL,
-    "token" TEXT NOT NULL,
+    "otp" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "usedAt" TIMESTAMP(3),
     "expiresAt" TIMESTAMP(3) NOT NULL,
-    "email" TEXT NOT NULL,
+    "userID" INTEGER NOT NULL,
 
-    CONSTRAINT "PasswordVerificationToken_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "registerVerificationOTP_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -155,6 +155,7 @@ CREATE TABLE "User" (
     "date_of_birth" TIMESTAMP(3) NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "phone" TEXT NOT NULL DEFAULT '',
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -190,10 +191,10 @@ CREATE UNIQUE INDEX "Artist_user_id_key" ON "Artist"("user_id");
 CREATE INDEX "Artist_name_idx" ON "Artist"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "EmailVerificationToken_token_key" ON "EmailVerificationToken"("token");
+CREATE UNIQUE INDEX "resetPasswordOTP_otp_key" ON "resetPasswordOTP"("otp");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PasswordVerificationToken_token_key" ON "PasswordVerificationToken"("token");
+CREATE UNIQUE INDEX "registerVerificationOTP_otp_key" ON "registerVerificationOTP"("otp");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "AuthToken_token_key" ON "AuthToken"("token");
@@ -211,7 +212,13 @@ CREATE INDEX "Playlist_name_idx" ON "Playlist"("name");
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
+
+-- CreateIndex
 CREATE INDEX "User_active_idx" ON "User"("active");
+
+-- CreateIndex
+CREATE INDEX "User_email_phone_idx" ON "User"("email", "phone");
 
 -- AddForeignKey
 ALTER TABLE "Album" ADD CONSTRAINT "Album_artistID_fkey" FOREIGN KEY ("artistID") REFERENCES "Artist"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

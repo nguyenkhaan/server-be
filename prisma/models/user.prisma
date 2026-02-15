@@ -13,8 +13,10 @@ model User {
     likes              Likes[]
     userRoles          UserRole[]
     listeningHistories listeningHistory[]
+    phone              String             @unique @default("")
 
     @@index([active])
+    @@index([email, phone])
 }
 
 model UserRole {

@@ -1,19 +1,19 @@
-model EmailVerificationToken {
+model resetPasswordOTP {
     id        Int       @id @default(autoincrement())
-    token     String    @unique
+    otp       String    @unique
     createdAt DateTime  @default(now())
     usedAt    DateTime?
     expiresAt DateTime
-    email     String
+    userID    Int
 }
 
-model PasswordVerificationToken {
+model registerVerificationOTP {
     id        Int       @id @default(autoincrement())
-    token     String    @unique
+    otp       String    @unique
     createdAt DateTime  @default(now())
     usedAt    DateTime?
     expiresAt DateTime
-    email     String
+    userID    Int
 }
 
 model AuthToken {
