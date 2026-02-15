@@ -1,5 +1,5 @@
-import {  RegisterDTO , VerifyDTO } from "@/modules/auth/dto/auth.dto";
-import { BadRequestException, Body, Controller, Get, Post, Put, Query, Req, UseGuards } from "@nestjs/common";
+import {  ChangePasswordDTO, ForgotPasswordDTO, RegisterDTO , VerifyDTO } from "@/modules/auth/dto/auth.dto";
+import { BadRequestException, Body, Controller, Patch, Post, Put, Query, Req, UseGuards } from "@nestjs/common";
 import { LocalAuthGuard } from "@/modules/auth/local-auth.guard";
 import { JwtAuthGuard } from "@/modules/auth/jwt-auth.guard";
 import { AuthService } from "@/modules/auth/auth.service";
@@ -28,5 +28,17 @@ export class AuthController
     {
         const responseData = await this.authService.login(req.user) 
         return responseData 
+    }
+    @Patch('forgot-password') 
+    async forgotPassword(@Body() forgotPasswordData : ForgotPasswordDTO) 
+    {
+        const responseData = await this.authService.forgotPassword(forgotPasswordData) 
+        return responseData
+    } 
+    @Patch('change-password') 
+    async changePassword(@Body() changePassData : ChangePasswordDTO) 
+    {
+        const responseData = await this.authService.changePassword(changePassData) 
+        return responseData
     }
 }

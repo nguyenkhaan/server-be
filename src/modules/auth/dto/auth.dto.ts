@@ -45,4 +45,22 @@ export class LoginDTO {
     @IsString() 
     password : string 
 }
+export class ForgotPasswordDTO {
+    @IsString() 
+    @IsEmail() 
+    email : string 
+    @IsString() 
+    @Matches(/^[0-9]{9,15}$/, {
+        message: 'Phone number is invalid',
+    })
+    phone : string 
+}
+export class ChangePasswordDTO {
+    @IsString() 
+    otp : string 
+    @IsNumber() 
+    userID : number 
+    @IsString() 
+    password : string 
+}
 //Login se xu li sau 

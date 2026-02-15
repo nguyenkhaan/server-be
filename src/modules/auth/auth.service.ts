@@ -1,12 +1,12 @@
 import { PrismaService } from "@/prisma/prisma.service";
 import { BadRequestException, Body, ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { UserService } from "@/modules/user/user.service";
-import { RegisterDTO, VerifyDTO } from "@/modules/auth/dto/auth.dto";
+import { ChangePasswordDTO, ForgotPasswordDTO, RegisterDTO, VerifyDTO } from "@/modules/auth/dto/auth.dto";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { AUTHTOKENTYPE, Role } from "@prisma/client";
 import { OtpService } from "@/modules/otp/otp.service";
-import { OTP_LIVE_TIME , ACCESS_TOKEN_LIVE_TIME , REFRESH_TOKEN_LIVE_TIME } from "@/bases/common/constants/auth.constant";
+import { OTP_LIVE_TIME , ACCESS_TOKEN_LIVE_TIME , REFRESH_TOKEN_LIVE_TIME, RESET_PASSWORD_OTP_LIVE_TIME } from "@/bases/common/constants/auth.constant";
 import { TokenField } from "@/bases/common/enums/token.enum";
 @Injectable() 
 export class AuthService 
@@ -235,8 +235,83 @@ export class AuthService
         {
             if (err instanceof UnauthorizedException || err instanceof BadRequestException) 
                 throw err 
-            throw new InternalServerErrorException("Verify Server Is Down") 
+            throw new InternalServerErrorException("Login Server Is Down") 
         }
+    }
+    //forgot password ? -> Truyen vao phone / email -> Tim kiem user, neu tim thay user thi lum -> Tao mot otp va gui lai -> Nguoi dung nhan otp + userID -> Tien hanh call lan nua de doi password 
+    async forgotPassword(forgotPassword : ForgotPasswordDTO) 
+    {
+        try 
+        {
+            const user = await this.prismaService.user.findFirst({
+                where: {
+                    email : forgotPassword.email, 
+                    phone : forgotPassword.phone
+                }
+            })
+            if (!user) 
+                throw new UnauthorizedException("User has not registered") 
+            const otp = this.otpService.createOtp() 
+            const hashedOtp = await this.otpService.hashOTP(otp) 
+            await this.prismaService.resetPasswordOTP.deleteMany({
+                where: {
+                    userID : user.id 
+                }
+            })
+            await this.prismaService.resetPasswordOTP.create({
+                data: {
+                    expiresAt : new Date(Date.now() + RESET_PASSWORD_OTP_LIVE_TIME), 
+                    otp : hashedOtp, 
+                    userID : user.id, 
+                }
+            })
+            return {
+                userID : user.id, 
+                otp 
+            }
+        } 
+        catch (err) 
+        {
+            if (err instanceof UnauthorizedException) 
+                throw err 
+            throw new InternalServerErrorException("Forgot Password Server Is Down") 
+        }
+    }
+    async changePassword(changePasswordData : ChangePasswordDTO) 
+    {
+        const record = await this.prismaService.resetPasswordOTP.findFirst({
+            where: {
+                userID : changePasswordData.userID
+            }
+        })
+        if (!record) 
+            throw new BadRequestException("Wrong information") 
+        
+        if (record.expiresAt.getTime() < Date.now()) 
+            throw new BadRequestException("OTP is expired") 
+        const result = await this.otpService.compareOtp(changePasswordData.otp , record.otp) 
+    
+        if (result) 
+        {
+            await this.prismaService.resetPasswordOTP.update({
+                where: {id : record.id}, 
+                data: {
+                    usedAt : new Date(Date.now())
+                }
+            })
+            const hashedPassword = await Bun.password.hash(changePasswordData.password , {
+                algorithm: 'bcrypt', 
+                cost : 10 
+            })
+            await this.prismaService.user.update({
+                where: {id : changePasswordData.userID}, 
+                data: {
+                    password : hashedPassword
+                }
+            })
+            return true 
+        }
+        else throw new BadRequestException("OTP is incorrect") 
     }
   
 }
