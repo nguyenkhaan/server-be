@@ -1,5 +1,5 @@
 //Store the login information 
-export enum LoginField {
+export enum TokenField {
     EMAIL = 'email', 
     PURPOSE = 'purpose', 
     NAME = 'name', 

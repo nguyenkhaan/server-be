@@ -1,11 +1,11 @@
 import { PrismaService } from "@/prisma/prisma.service";
-import { ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Body, ConflictException, Injectable, InternalServerErrorException, UnauthorizedException } from "@nestjs/common";
 import { UserService } from "@/modules/user/user.service";
 import { RegisterDTO } from "@/modules/auth/dto/auth.dto";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
-import { LoginField } from "@/bases/common/enums/login.enum";
-import { AUTHTOKENTYPE, Role } from "@prisma/client";
+import { TokenField } from "@/bases/common/enums/token.enum";
+import { AUTHTOKENTYPE, FUNCTOKETYPE, Role } from "@prisma/client";
 @Injectable() 
 export class AuthService 
 {
@@ -52,6 +52,12 @@ export class AuthService
                 secret : verifySecretKey
             })
             //Store the verify token 
+            //Xu li loi: User co them spam token dang ki 
+            await this.prismaService.emailVerificationToken.deleteMany({
+                where: {
+                    email : user.email 
+                }
+            })
             await this.prismaService.emailVerificationToken.create({
                 data: {
                     email : user.email, 
@@ -159,13 +165,13 @@ export class AuthService
                 }
             })
             const payload = {
-                [LoginField.EMAIL] : user.email, 
-                [LoginField.NAME] : user.name, 
-                [LoginField.ROLE] : userRoles.map((userRoleRow) => userRoleRow.role) 
+                [TokenField.EMAIL] : user.email, 
+                [TokenField.NAME] : user.name, 
+                [TokenField.ROLE] : userRoles.map((userRoleRow) => userRoleRow.role) 
             }
             const access_token = this.jwtService.sign(
             { 
-                ...payload , [LoginField.PURPOSE] : AUTHTOKENTYPE.ACCESS
+                ...payload , [TokenField.PURPOSE] : AUTHTOKENTYPE.ACCESS
             } , {
                 secret: accessKey, 
                 expiresIn : '15m', 
@@ -173,7 +179,7 @@ export class AuthService
             //Create refresh token 
             const refresh_token = this.jwtService.sign(
             {
-                ...payload , [LoginField.PURPOSE] : AUTHTOKENTYPE.REFRESH     
+                ...payload , [TokenField.PURPOSE] : AUTHTOKENTYPE.REFRESH     
             } , {
                 secret: refreshKey, 
                 expiresIn : '30d', 
@@ -189,6 +195,111 @@ export class AuthService
                 throw err 
             throw new InternalServerErrorException("Login server down. Please try again") 
             
+        }
+    }
+    async resetPassword(email : string)  
+    {
+        //Tien hanh tao token va gui ve cho nguoi dung 
+        try 
+        {
+            const user = await this.userService.findOne(email) 
+            //Gui cai token di kem chung 
+            if (!user) 
+                throw new UnauthorizedException("User has not been verified") 
+            const secretResetPasswordKey = this.configService.get<string>('RESET_PASSWORD_SECRET')
+            //Ben quan tri vien se co 1 route de xoa tai khoan nguoi dung, phong truong hop ho dang nhap tao lao -> Dat tai khoan thanh active = 0
+            const resetPassToken = this.jwtService.sign({
+                [TokenField.EMAIL] : user.email, 
+                [TokenField.PURPOSE] : FUNCTOKETYPE.RESET_PASSWORD, 
+                [TokenField.NAME] : user.name
+            } , {
+                secret: secretResetPasswordKey, 
+                expiresIn : '5m'
+            })
+            //Luu token vao trong database 
+            //Xu li loi: User co them spam token dang ki -> Can than coi chung bi tran database vi may tro choi ngu nay 
+            await this.prismaService.passwordVerificationToken.deleteMany({
+                where: {
+                    email : user.email 
+                }
+            })
+            await this.prismaService.passwordVerificationToken.create({
+                data: {
+                    email : user.email, 
+                    expiresAt : new Date(Date.now() + 5 * 60 * 1000), //5 minutes 
+                    token : resetPassToken 
+                }
+            })
+            //Tra ve du lieu de ben FE lam viec 
+            return {
+                token : resetPassToken   //Gui token ve 
+            }
+        } 
+        catch (err) 
+        {
+            if (err instanceof UnauthorizedException) 
+                throw err 
+            throw new InternalServerErrorException("Reset Password server down. Please try again") 
+        }
+    } 
+    async changePasswordInDb(token : string , newPassword : string) 
+    {
+        try 
+        {
+            const secretResetPasswordKey = this.configService.get<string>('RESET_PASSWORD_SECRET')
+            const payload = await this.jwtService.verifyAsync(token , {
+                secret : secretResetPasswordKey
+            })
+            if (payload[TokenField.PURPOSE] !== FUNCTOKETYPE.RESET_PASSWORD) 
+            {
+                throw new UnauthorizedException('Invalid token purpose')
+            }
+            const email = payload[TokenField.EMAIL] 
+            const hashedPassword = await Bun.password.hash(newPassword , {
+                algorithm: 'bcrypt', 
+                cost: 10 
+            })
+            
+            const savedToken = await this.prismaService.passwordVerificationToken.findFirst({
+                where: { token } , 
+                select: {
+                    token : true, 
+                    email : true, 
+                    usedAt: true, 
+                    expiresAt: true 
+                }
+            })
+            if (!savedToken || savedToken.expiresAt < new Date()) 
+            {
+                throw new UnauthorizedException('Token expired')
+            }
+
+            if (!savedToken?.usedAt && savedToken?.email == email) 
+            {
+                await this.prismaService.user.update({
+                    where: {email}, 
+                    data: {
+                        password : hashedPassword
+                    }
+                })
+                //Cap nhat thoi diem su dung 
+                await this.prismaService.passwordVerificationToken.update({
+                    where: {token}, 
+                    data: {
+                        usedAt: new Date() 
+                    }
+                })
+                return true 
+            }
+            else throw new BadRequestException("Token has been used") 
+            
+            return true 
+        }
+        catch (err) 
+        {
+            if (err instanceof UnauthorizedException || err instanceof BadRequestException) 
+                throw err 
+            throw new InternalServerErrorException("Reset Password server down. Please try again") 
         }
     }
 }
