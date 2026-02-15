@@ -6,16 +6,17 @@ import { AuthService } from '@/modules/auth/auth.service';
 export class LocalStrategy extends PassportStrategy(Strategy) {
   constructor(private authService: AuthService) {
     super({
-        usernameField : 'email', 
+        usernameField : 'identifier', 
         passwordField : 'password'
     });
   }
 
   async validate(username: string, password: string): Promise<any> {
+    console.log('GUARD IS RUNNING') 
     const user = await this.authService.validateUser(username, password);
     if (!user) {
       throw new UnauthorizedException();
     }
-    return user;
+    return user;  //Tra ve user -> Tu dong luu vao ben trong req.user 
   }
 }

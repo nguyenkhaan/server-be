@@ -10,7 +10,6 @@ export class LocalAuthGuard extends AuthGuard('local') {
     }
     canActivate(context: ExecutionContext) 
     {
-        console.log('GUARD RUNNING') 
         const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_KEY, [
               context.getHandler(),
               context.getClass(),

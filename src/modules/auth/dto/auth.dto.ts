@@ -39,4 +39,10 @@ export class VerifyDTO {
     @Length(6) 
     otp : string 
 }
+export class LoginDTO {
+    @IsString() 
+    identifier : string 
+    @IsString() 
+    password : string 
+}
 //Login se xu li sau 

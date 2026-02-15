@@ -6,7 +6,8 @@ import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import { AUTHTOKENTYPE, Role } from "@prisma/client";
 import { OtpService } from "@/modules/otp/otp.service";
-import { OTP_LIVE_TIME } from "@/bases/common/constants/auth.constant";
+import { OTP_LIVE_TIME , ACCESS_TOKEN_LIVE_TIME , REFRESH_TOKEN_LIVE_TIME } from "@/bases/common/constants/auth.constant";
+import { TokenField } from "@/bases/common/enums/token.enum";
 @Injectable() 
 export class AuthService 
 {
@@ -149,11 +150,16 @@ export class AuthService
         }
 
     }
-    async validateUser(email : string , password : string) 
+    async validateUser(identifier : string , password : string) 
     {
-        console.log(email , password) 
-        const user = await this.userService.findOne(email) 
-        console.log(user) 
+        const user = await this.prismaService.user.findFirst({
+            where: {
+                OR: [
+                    {email : identifier}, 
+                    {phone : identifier}
+                ]
+            }
+        })
         if (user) 
         {
             const results = await Bun.password.verify(
@@ -163,7 +169,74 @@ export class AuthService
             if (results) return user 
             return null  
         }
-        return null  
+        return null  //Tra ve null 
+    }
+    async login(user : any)
+    {
+        try 
+        {
+            await this.prismaService.authToken.deleteMany({
+                where: {
+                    user_id : user.id  
+                }
+            })
+            const roles = await this.prismaService.userRole.findMany({
+                where: {
+                    userID : user.id 
+                },  
+                select: {
+                    role : true 
+                }
+            })
+            const accessSecretKey = this.configService.get<string>('ACCESS_SECRET')
+            const refreshSecretKey = this.configService.get<string>('REFRESH_SECRET')
+            const payload = {
+                [TokenField.ID] : user.id, 
+                [TokenField.EMAIL] : user.email, 
+                [TokenField.PHONE] : user.phone, 
+                [TokenField.ROLE] : roles.map((r) => r.role), 
+            }
+            const accessToken = this.jwtService.sign({
+                ...payload , [TokenField.PURPOSE] : AUTHTOKENTYPE.ACCESS 
+            } , {
+                secret : accessSecretKey, 
+                expiresIn: '15m'  //15 phut 
+            })
+            const refreshToken = this.jwtService.sign({
+                ...payload , [TokenField.PURPOSE] : AUTHTOKENTYPE.REFRESH
+            } , {
+                secret: refreshSecretKey, 
+                expiresIn: '30d'
+            }) 
+            await this.prismaService.authToken.createMany({
+                data: [
+                    {
+                        user_id : user.id, 
+                        token : accessToken, 
+                        expiresAt : new Date(Date.now() + ACCESS_TOKEN_LIVE_TIME), 
+                        isActive : true, 
+                        type : AUTHTOKENTYPE.ACCESS
+                    }, 
+                    {
+                        user_id : user.id, 
+                        token : refreshToken, 
+                        expiresAt : new Date(Date.now() + REFRESH_TOKEN_LIVE_TIME), 
+                        isActive : true, 
+                        type : AUTHTOKENTYPE.REFRESH
+                    }
+                ]
+            })
+            return {
+                access_token : accessToken, 
+                refresh_token : refreshToken
+            }
+        } 
+        catch (err)
+        {
+            if (err instanceof UnauthorizedException || err instanceof BadRequestException) 
+                throw err 
+            throw new InternalServerErrorException("Verify Server Is Down") 
+        }
     }
   
 }

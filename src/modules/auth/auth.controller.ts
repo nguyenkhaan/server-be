@@ -22,4 +22,11 @@ export class AuthController
         const responseData = await this.authService.verifyUser(verifyData) 
         return responseData
     }
+    @UseGuards(LocalAuthGuard)
+    @Post('login') 
+    async login(@Req() req : Request) 
+    {
+        const responseData = await this.authService.login(req.user) 
+        return responseData 
+    }
 }
