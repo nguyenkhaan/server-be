@@ -8,6 +8,10 @@ import { AUTHTOKENTYPE, Role } from "@prisma/client";
 import { OtpService } from "@/modules/otp/otp.service";
 import { OTP_LIVE_TIME , ACCESS_TOKEN_LIVE_TIME , REFRESH_TOKEN_LIVE_TIME, RESET_PASSWORD_OTP_LIVE_TIME } from "@/bases/common/constants/auth.constant";
 import { TokenField } from "@/bases/common/enums/token.enum";
+import { EmailService } from "@/modules/email/email.service";
+import { EMAIL_PURPOSE } from "@/bases/common/enums/email.enum";
+import { EmailContentConsolic } from "@/util/contact.content.consolic";
+import { SmsService } from "@/modules/sms/sms.service";
 @Injectable() 
 export class AuthService 
 {
@@ -16,12 +20,15 @@ export class AuthService
         private readonly userService : UserService, 
         private readonly jwtService : JwtService, 
         private readonly configService : ConfigService, 
-        private readonly otpService : OtpService 
+        private readonly otpService : OtpService, 
+        private readonly emailService : EmailService, 
+        private readonly smsService : SmsService
     ) {} 
     async register(registerData : RegisterDTO) 
     {
         try 
         {
+            
             const phone = registerData.phone 
             const email = registerData.email 
             if (!phone || !email)
@@ -88,13 +95,23 @@ export class AuthService
                     otp : hashedOtp, 
                 }
             })
+            //Gui otp ve email cho nguoi dung 
+
+            await this.emailService.sendEmail(EMAIL_PURPOSE.REGISTER , 'nguyenkhaan2006@gmail.com' , { otp : '123' , content : EmailContentConsolic.register } , 'Cloudian Company Sign Up')
+
+            //Gui otp ve sms cho nguoi dung (Update brand name in production)
+            // const res = await this.smsService.sendSms(String(phone) , 'This is yout otp: 123')
+            
+            
             return {
                 otp,    //Ma otp gui ve cho FE 
                 userID : user.id //Ben FE se nam user id va tien hanh gui lai cho BE de verify nguoi dung 
-            }
+            }  
+           return true 
         }
         catch (err) 
         {
+            console.log(err) 
             if (err instanceof BadRequestException || err instanceof ConflictException || err instanceof BadRequestException) 
                 throw err 
             throw new InternalServerErrorException("Register Server Is Down") 
@@ -265,6 +282,9 @@ export class AuthService
                     userID : user.id, 
                 }
             })
+            //Gui email ve cho nguoi dung 
+
+            //Gui sms ve cho nguoi dung 
             return {
                 userID : user.id, 
                 otp 
